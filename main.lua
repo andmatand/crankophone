@@ -1,4 +1,5 @@
 import "CoreLibs/graphics"
+import "CoreLibs/sprites"
 import "CoreLibs/timer"
 import "CoreLibs/ui"
 
@@ -24,12 +25,21 @@ local state_recording = 2
 local crankIndicatorIsEnabled = true
 local crankFrames = 0
 
+local playhead
+
 function init()
     playdate.display.setRefreshRate(FPS)
 
+    playhead = create_playhead_sprite()
+    playhead:add()
+
+    gfx.sprite.setBackgroundDrawingCallback(function(x, y, w, h)
+        gfx.setImageDrawMode(gfx.kDrawModeCopy)
+        waveformImage:draw(0, 0)
+    end)
+
     state = state_initial
 end
-init()
 
 function playdate.update()
     if playdate.buttonJustPressed(playdate.kButtonB) then
@@ -108,36 +118,32 @@ function playdate.update()
 
     playdate.timer.updateTimers()
 
-    draw()
+    if state == state_play then
+        update_playhead()
+        gfx.sprite.update()
+    else
+        draw_non_play_state()
+    end
+
     if state == state_play and crankIndicatorIsEnabled then
         playdate.ui.crankIndicator:update()
     end
 end
 
-function draw()
+function draw_non_play_state()
     if state == state_initial then
         local cx = 274
         gfx.drawTextAligned("hold Ⓑ\nto record", cx, 180, kTextAlignment.center)
         downArrowImage:draw(cx - 9, 228)
     elseif state == state_recording then
         render_waveform()
-    elseif samplePlayer then
-        playdate.graphics.setImageDrawMode(gfx.kDrawModeCopy)
-        waveformImage:draw(0, 0)
-        draw_playhead()
     end
 end
 
-function draw_playhead()
-    if state == state_play then
-        local playerOffset = samplePlayer:getOffset()
-        local totalWidth = 400--#micLevels * sliceWidth
-        local headX = (playerOffset / samplePlayer:getLength()) * totalWidth
+function update_playhead()
+    local x = (samplePlayer:getOffset() / samplePlayer:getLength()) * 400
 
-        gfx.setColor(gfx.kColorXOR)
-        gfx.setLineWidth(2)
-        gfx.drawLine(headX, 0, headX, 239)
-    end
+    playhead:moveTo(x, 0)
 end
 
 function render_waveform()
@@ -163,3 +169,21 @@ function render_waveform()
         gfx.fillRect(x, 120 - (h / 2), sliceWidth, h)
     end
 end
+
+function create_playhead_sprite()
+    local image = gfx.image.new(2, 240, gfx.kColorClear)
+
+    gfx.pushContext(image)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillRect(0, 0, 2, 240)
+    gfx.popContext()
+
+    local sprite = gfx.sprite.new(image)
+    sprite:setCenter(0, 0)
+    sprite:setImageDrawMode(gfx.kDrawModeXOR)
+    sprite:setImageDrawMode(gfx.kDrawModeNXOR)
+
+    return sprite
+end
+
+init()
