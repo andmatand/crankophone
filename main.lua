@@ -38,6 +38,9 @@ function init()
         waveformImage:draw(0, 0)
     end)
 
+    local font = gfx.font.new("font/Roobert-11-Medium")
+    gfx.setFont(font)
+
     state = state_initial
 end
 
@@ -133,6 +136,7 @@ end
 function draw_non_play_state()
     if state == state_initial then
         local cx = 274
+
         gfx.drawTextAligned("hold Ⓑ\nto record", cx, 180, kTextAlignment.center)
         downArrowImage:draw(cx - 9, 228)
     elseif state == state_recording then
