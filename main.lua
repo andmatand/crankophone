@@ -103,6 +103,12 @@ function playdate.update()
     rate *= .8
     rate += crankChange / 45
 
+    if playdate.buttonIsPressed(playdate.kButtonLeft) then
+        rate = -1
+    elseif playdate.buttonIsPressed(playdate.kButtonRight) then
+        rate = 1
+    end
+
     if state == state_play and crankIndicatorIsEnabled and crankChange ~= 0 then
         crankFrames += 1
         if crankFrames > FPS then
